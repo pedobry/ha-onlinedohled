@@ -1,5 +1,6 @@
 {
   "name": "Online Dohled",
   "content_in_root": false,
+  "hide_default_branch": true,
   "homeassistant": "2026.1.0"
 }
