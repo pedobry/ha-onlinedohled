@@ -4,6 +4,8 @@ Integrace jednou denně stáhne měsíční CSV spotřeby tepla, studené vody a
 
 Portál nemá API. Přihlášení i export jsou formuláře stránky spotřeby, na které je teplo `Chck0`, studená voda `Chck1` a teplá voda `Chck2`.
 
+![Zařízení Online Dohled v Home Assistantu](docs/device.jpg)
+
 ## Instalace přes HACS
 
 1. V HACS otevřete **Integrace**, menu vpravo nahoře a **Vlastní repozitáře**.
