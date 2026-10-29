@@ -2,20 +2,28 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from functools import partial
 
 from homeassistant.components.recorder.models.statistics import (
     StatisticData,
     StatisticMeanType,
     StatisticMetaData,
 )
-from homeassistant.components.recorder.statistics import async_import_statistics
+from homeassistant.components.recorder.statistics import (
+    async_change_statistics_unit,
+    async_import_statistics,
+    can_convert_units,
+    get_metadata,
+)
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 
 from .const import SERIES_KEYS
 from .coordinator import OnlineDohledCoordinator
@@ -55,6 +63,7 @@ class OnlineDohledSensor(OnlineDohledEntity, SensorEntity):
         super().__init__(coordinator, key)
         self._attr_name = _NAMES[key]
         self._attr_icon = _ICONS[key]
+        self._import_lock = asyncio.Lock()
 
     @property
     def _reading(self) -> SeriesReading | None:
@@ -100,17 +109,16 @@ class OnlineDohledSensor(OnlineDohledEntity, SensorEntity):
             "portal_unit": reading.portal_unit,
         }
 
-    async def async_added_to_hass(self) -> None:
-        """Import history once the entity id exists."""
-        await super().async_added_to_hass()
-        self._import_statistics()
-
     def _handle_coordinator_update(self) -> None:
-        """Refresh imported history before the new state is written."""
-        self._import_statistics()
-        super()._handle_coordinator_update()
+        """Convert stored history, then write the new state."""
+        self.hass.async_create_task(self._async_import_and_write())
 
-    def _import_statistics(self) -> None:
+    async def _async_import_and_write(self) -> None:
+        async with self._import_lock:
+            await self._async_import_statistics()
+            self.async_write_ha_state()
+
+    async def _async_import_statistics(self) -> None:
         reading = self._reading
         if (
             reading is None
@@ -133,6 +141,29 @@ class OnlineDohledSensor(OnlineDohledEntity, SensorEntity):
             {"start": start, "state": value, "sum": value} for start, value in reading.points
         ]
         try:
+            await self._async_convert_existing_unit(reading.display_unit, reading.unit_class)
             async_import_statistics(self.hass, metadata, statistics)
         except Exception:
             _LOGGER.exception("Historie %s se nepodařila zapsat", self.entity_id)
+
+    async def _async_convert_existing_unit(self, new_unit: str, unit_class: str) -> None:
+        """Rewrite an earlier kWh history into GJ before new points are stored."""
+        metadata = await self.hass.async_add_executor_job(
+            partial(get_metadata, self.hass, statistic_ids={self.entity_id})
+        )
+        row = metadata.get(self.entity_id)
+        if row is None:
+            return
+        old_unit = row[1].get("unit_of_measurement")
+        if not old_unit or old_unit == new_unit:
+            return
+        if not can_convert_units(unit_class, old_unit, new_unit):
+            raise HomeAssistantError(
+                f"Historii {self.entity_id} nelze převést z {old_unit} na {new_unit}"
+            )
+        await async_change_statistics_unit(
+            self.hass,
+            self.entity_id,
+            new_unit_of_measurement=new_unit,
+            old_unit_of_measurement=old_unit,
+        )

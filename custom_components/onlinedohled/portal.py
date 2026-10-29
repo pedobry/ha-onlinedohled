@@ -19,13 +19,13 @@ from .const import (
     SERIES_HEAT,
     SERIES_HOT_WATER,
     SERIES_KEYS,
+    UNIT_GJ,
     UNIT_KWH,
     UNIT_M3,
 )
 
 PERIOD_CURRENT = "Aktuální"
 _QUANT = Decimal("0.001")
-_KWH_FACTOR = Decimal(1000) / Decimal("3.6")
 _CHECKBOX = re.compile(r"Chck(\d+)$")
 _DIACRITICS = str.maketrans(
     "áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ",
@@ -199,10 +199,10 @@ def _stored_decimal(months: dict[str, str], key: str) -> Decimal:
 
 
 def display_amount(native_unit: str, amount: Decimal) -> tuple[Decimal, str, str | None]:
-    """Convert a portal amount to the unit Home Assistant graphs expect."""
+    """Keep heat in GJ, the same unit as the portal bill."""
     unit = native_unit.strip()
     if unit == "GJ":
-        return _q(amount * _KWH_FACTOR), UNIT_KWH, "energy"
+        return _q(amount), UNIT_GJ, "energy"
     if unit == "kWh":
         return _q(amount), UNIT_KWH, "energy"
     if unit == "MWh":

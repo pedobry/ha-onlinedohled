@@ -27,11 +27,11 @@ Heslo zůstane v konfiguraci integrace. Do chatu ani do protokolu se neposílá.
 
 | Senzor | Jednotka | Význam |
 | --- | --- | --- |
-| Spotřeba tepla | kWh | Součet uložených měsíců. Portál posílá GJ, grafy energie potřebují kWh. |
+| Spotřeba tepla | GJ | Součet uložených měsíců, ve stejné jednotce jako vyúčtování. |
 | Studená voda | m³ | Součet uložených měsíců. |
 | Teplá voda | m³ | Součet uložených měsíců. |
 
-U každého senzoru je atribut `portal_value` s číslem z posledního řádku CSV v jednotce portálu, například GJ. Podle něj jde hodnota porovnat s webem.
+U každého senzoru je atribut `portal_value` s číslem z posledního řádku CSV. Podle něj jde aktuální měsíc porovnat s webem.
 
 CSV obsahuje jen posledních 12 měsíců. Starší měsíce si integrace pamatuje a nikdy je nesníží. Číslo senzoru proto roste od prvního staženého měsíce, není to stav vodoměru od nuly.
 

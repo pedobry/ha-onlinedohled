@@ -69,16 +69,16 @@ class PortalTests(unittest.TestCase):
         now = datetime(2026, 10, 29, 10, 36, tzinfo=tz)
         reading = portal.build_reading("heat", parsed.native_unit, months, now, tz)
 
-        self.assertEqual(reading.display_unit, "kWh")
+        self.assertEqual(reading.display_unit, "GJ")
         self.assertEqual(reading.unit_class, "energy")
-        self.assertAlmostEqual(reading.total, 2903.611, places=3)
-        self.assertAlmostEqual(reading.current_month, 211.111, places=3)
+        self.assertAlmostEqual(reading.total, 10.453, places=3)
+        self.assertAlmostEqual(reading.current_month, 0.760, places=3)
         self.assertAlmostEqual(reading.portal_value, 0.760, places=3)
         self.assertEqual(reading.portal_unit, "GJ")
 
         self.assertEqual(len(reading.points), 12)
         self.assertEqual(reading.points[0][0], datetime(2025, 11, 30, 23, tzinfo=tz))
-        self.assertAlmostEqual(reading.points[0][1], 715.833, places=3)
+        self.assertAlmostEqual(reading.points[0][1], 2.577, places=3)
         self.assertEqual(reading.points[-2][0], datetime(2026, 9, 30, 23, tzinfo=tz))
         self.assertEqual(reading.points[-1][0], datetime(2026, 10, 29, 9, tzinfo=tz))
         self.assertAlmostEqual(reading.points[-1][1], reading.total, places=6)
@@ -128,7 +128,7 @@ class PortalTests(unittest.TestCase):
             datetime(2026, 10, 29, 10, 36, tzinfo=tz),
             tz,
         )
-        self.assertAlmostEqual(reading.total, 4292.5, places=3)
+        self.assertAlmostEqual(reading.total, 15.453, places=3)
 
     def test_water_units(self) -> None:
         cold = portal.parse_consumption_csv(
