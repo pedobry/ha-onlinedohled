@@ -6,14 +6,11 @@ Portál nemá API. Přihlášení i export jsou formuláře stránky spotřeby, 
 
 ## Instalace přes HACS
 
-1. Nahrajte tento projekt na GitHub jako veřejný repozitář.
-2. V HACS otevřete **Integrace**, menu vpravo nahoře a **Vlastní repozitáře**.
-3. Vložte adresu repozitáře a jako kategorii vyberte **Integrace**.
-4. Stáhněte **Online Dohled** a restartujte Home Assistant.
-5. V Nastavení → Zařízení a služby přidejte integraci **Online Dohled**.
-6. Zadejte jméno, heslo a adresu stránky spotřeby z prohlížeče, například `https://app.onlinedohled.cz/GTBC/…/Spotreba03.aspx`.
-
-Další verze pak stáhnete v HACS tlačítkem aktualizace.
+1. V HACS otevřete **Integrace**, menu vpravo nahoře a **Vlastní repozitáře**.
+2. Vložte `https://github.com/pedobry/ha-onlinedohled` a jako kategorii vyberte **Integrace**.
+3. Stáhněte **Online Dohled** a restartujte Home Assistant.
+4. V Nastavení → Zařízení a služby přidejte integraci **Online Dohled**.
+5. Zadejte jméno, heslo a adresu stránky spotřeby z prohlížeče, například `https://app.onlinedohled.cz/GTBC/…/Spotreba03.aspx`.
 
 ## Ruční instalace
 
