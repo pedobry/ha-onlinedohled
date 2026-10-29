@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Online Dohled",
+        "description": "Sign in to Online Dohled. The address is the consumption page from the browser address bar.",
+        "data": {
+          "username": "Username",
+          "password": "Password",
+          "url": "Consumption page address"
+        },
+        "data_description": {
+          "url": "For example https://app.onlinedohled.cz/…/Spotreba03.aspx"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Sign in to Online Dohled again",
+        "description": "The password was rejected. Enter the current password.",
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Sign-in failed. Check the username and password.",
+      "cannot_connect": "Cannot reach Online Dohled.",
+      "invalid_url": "The address must be an https link to an .aspx page.",
+      "export_failed": "Sign-in worked, but the CSV export failed. Check the consumption page address.",
+      "unknown": "Unexpected error. Details are in the Home Assistant log."
+    },
+    "abort": {
+      "already_configured": "This account and page are already set up.",
+      "reauth_successful": "The password has been updated."
+    }
+  }
+}

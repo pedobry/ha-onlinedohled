@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Online Dohled",
+        "description": "Přihlášení do aplikace Online Dohled. Adresa je stránka spotřeby z řádku prohlížeče.",
+        "data": {
+          "username": "Jméno uživatele",
+          "password": "Heslo",
+          "url": "Adresa stránky spotřeby"
+        },
+        "data_description": {
+          "url": "Například https://app.onlinedohled.cz/…/Spotreba03.aspx"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Znovu přihlásit Online Dohled",
+        "description": "Heslo bylo odmítnuto. Zadejte aktuální heslo.",
+        "data": {
+          "password": "Heslo"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Přihlášení selhalo. Zkontrolujte jméno a heslo.",
+      "cannot_connect": "Nelze se spojit s Online Dohledem.",
+      "invalid_url": "Adresa musí být https odkaz na stránku .aspx.",
+      "export_failed": "Přihlášení prošlo, ale export CSV se nepovedl. Zkontrolujte adresu stránky spotřeby.",
+      "unknown": "Neočekávaná chyba. Podrobnosti jsou v protokolu Home Assistantu."
+    },
+    "abort": {
+      "already_configured": "Tento účet a stránka už jsou přidané.",
+      "reauth_successful": "Heslo je aktualizované."
+    }
+  }
+}
