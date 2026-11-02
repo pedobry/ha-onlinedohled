@@ -231,7 +231,13 @@ class SeriesReading:
     current_month: float
     portal_value: float
     portal_unit: str
-    points: tuple[tuple[datetime, float], ...]
+    sum_baseline_native: str
+    # (start, state, sum) — sum is relative to the recorder zero point
+    points: tuple[tuple[datetime, float, float], ...]
+
+
+def _native_total(months: dict[str, str]) -> Decimal:
+    return _q(sum((_stored_decimal(months, key) for key in months), Decimal("0")))
 
 
 def build_reading(
@@ -240,8 +246,15 @@ def build_reading(
     months: dict[str, str],
     now: datetime,
     tz: ZoneInfo,
+    sum_baseline_native: str | None = None,
 ) -> SeriesReading:
-    """Build a monotonic cumulative reading and past statistic points."""
+    """Build a monotonic cumulative reading and past statistic points.
+
+    Home Assistant's energy dashboard uses differences of ``sum``. For a live
+    ``total_increasing`` sensor the recorder starts ``sum`` at 0 when the first
+    state is seen. Imported points must use the same zero point: absolute
+    cumulative totals here create a jump down to 0 and a negative energy bar.
+    """
     keys = sorted(months)
     if not keys:
         raise PortalError(f"Řada {key} nemá žádné měsíce")
@@ -251,20 +264,28 @@ def build_reading(
     )
     total = _display_sum(native_unit, months, keys)
     total_float = float(total)
-    points: list[tuple[datetime, float]] = []
+    native_total = _native_total(months)
+    if sum_baseline_native is None:
+        baseline_native = native_total
+    else:
+        baseline_native = _q(Decimal(sum_baseline_native))
+    baseline_display, _, _ = display_amount(native_unit, baseline_native)
+    baseline_float = float(baseline_display)
+
+    points: list[tuple[datetime, float, float]] = []
     for key_index, month in enumerate(keys[:-1]):
         year_s, month_s = month.split("-")
         start = _month_end_hour(int(year_s), int(month_s), tz)
         if start > now:
             continue
         cumulative = float(_display_sum(native_unit, months, keys[: key_index + 1]))
-        points.append((start, cumulative))
+        points.append((start, cumulative, cumulative - baseline_float))
 
     snapshot = _previous_hour(now, tz)
     if points and snapshot <= points[-1][0]:
         snapshot = None
     if snapshot is not None and snapshot <= now:
-        points.append((snapshot, total_float))
+        points.append((snapshot, total_float, total_float - baseline_float))
 
     return SeriesReading(
         key=key,
@@ -274,6 +295,7 @@ def build_reading(
         current_month=float(converted),
         portal_value=float(_stored_decimal(months, current_key)),
         portal_unit=native_unit,
+        sum_baseline_native=str(baseline_native),
         points=tuple(points),
     )
 
@@ -292,7 +314,11 @@ def build_readings(
         native_unit = item.get("native_unit")
         if not isinstance(months, dict) or not months or not isinstance(native_unit, str):
             continue
-        readings[key] = build_reading(key, native_unit, months, now, tz)
+        baseline = item.get("sum_baseline_native")
+        baseline_s = baseline if isinstance(baseline, str) else None
+        readings[key] = build_reading(
+            key, native_unit, months, now, tz, sum_baseline_native=baseline_s
+        )
     return readings
 
 

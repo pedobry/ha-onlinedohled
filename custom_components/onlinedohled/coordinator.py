@@ -35,12 +35,15 @@ class OnlineDohledCoordinator(DataUpdateCoordinator[dict[str, SeriesReading]]):
         self.password = entry.data["password"]
         self.page_url = entry.data[CONF_URL]
         self.store: Store[dict[str, object]] = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}")
+        # Cleared once after upgrading from absolute-sum imports that broke the energy dashboard.
+        self.reset_statistics: bool = False
 
     async def _async_update_data(self) -> dict[str, SeriesReading]:
         previous = await self.store.async_load() or {}
         stored_series = previous.get("series")
         if not isinstance(stored_series, dict):
             stored_series = {}
+        sum_rebased = bool(previous.get("sum_rebased"))
 
         try:
             fetched = await self._async_fetch()
@@ -53,17 +56,25 @@ class OnlineDohledCoordinator(DataUpdateCoordinator[dict[str, SeriesReading]]):
         for key, parsed in fetched.items():
             previous_item = series.get(key)
             old_months = {}
-            if isinstance(previous_item, dict) and isinstance(previous_item.get("months"), dict):
-                old_months = previous_item["months"]
+            old_baseline = None
+            if isinstance(previous_item, dict):
+                if isinstance(previous_item.get("months"), dict):
+                    old_months = previous_item["months"]
+                baseline = previous_item.get("sum_baseline_native")
+                if isinstance(baseline, str):
+                    old_baseline = baseline
             series[key] = {
                 "months": merge_months(old_months, parsed.rows),
                 "native_unit": parsed.native_unit,
+                "sum_baseline_native": old_baseline,
             }
-        await self.store.async_save({"series": series})
 
         timezone = ZoneInfo(self.hass.config.time_zone or "UTC")
         readings = build_readings(series, dt_util.now(), timezone)
         for key, reading in readings.items():
+            item = series.get(key)
+            if isinstance(item, dict):
+                item["sum_baseline_native"] = reading.sum_baseline_native
             _LOGGER.info(
                 "Online Dohled %s: celkem %s %s, tento měsíc %s %s",
                 key,
@@ -72,6 +83,10 @@ class OnlineDohledCoordinator(DataUpdateCoordinator[dict[str, SeriesReading]]):
                 reading.portal_value,
                 reading.portal_unit,
             )
+        # Existing installs had absolute cumulative values in ``sum``; wipe once so
+        # the rebased import does not sit next to those old points.
+        self.reset_statistics = bool(stored_series) and not sum_rebased
+        await self.store.async_save({"series": series, "sum_rebased": True})
         return readings
 
     async def _async_fetch(self):

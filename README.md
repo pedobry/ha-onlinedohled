@@ -41,4 +41,6 @@ Tlačítko **Obnovit spotřeby** stáhne data hned, jinak se stahují jednou za 
 
 V Nastavení → Energie přidejte oba vodní senzory do vody a teplo jako jednotlivé zařízení. První den se spotřeba aktuálního měsíce přičte najednou. Další dny už přibývají denní přírůstky. Uzavřené měsíce se v měsíčním pohledu sečtou do správného měsíce.
 
+Po aktualizaci na 1.1.3 se jednou smažou staré statistiky těchto senzorů (kvůli opravě záporných sloupců) a historie se naimportuje znovu. Stiskněte **Obnovit spotřeby**, případně restartujte Home Assistant.
+
 Vyžaduje Home Assistant 2026.1 nebo novější a zapnutý recorder.

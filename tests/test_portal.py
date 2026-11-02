@@ -75,25 +75,31 @@ class PortalTests(unittest.TestCase):
         self.assertAlmostEqual(reading.current_month, 0.760, places=3)
         self.assertAlmostEqual(reading.portal_value, 0.760, places=3)
         self.assertEqual(reading.portal_unit, "GJ")
+        self.assertEqual(reading.sum_baseline_native, "10.453")
 
         self.assertEqual(len(reading.points), 12)
         self.assertEqual(reading.points[0][0], datetime(2025, 11, 30, 23, tzinfo=tz))
         self.assertAlmostEqual(reading.points[0][1], 2.577, places=3)
+        # sum is relative to the first total so it meets the recorder's zero point
+        self.assertAlmostEqual(reading.points[0][2], 2.577 - 10.453, places=3)
         self.assertEqual(reading.points[-2][0], datetime(2026, 9, 30, 23, tzinfo=tz))
         self.assertEqual(reading.points[-1][0], datetime(2026, 10, 29, 9, tzinfo=tz))
         self.assertAlmostEqual(reading.points[-1][1], reading.total, places=6)
+        self.assertAlmostEqual(reading.points[-1][2], 0.0, places=6)
         self.assertNotIn(datetime(2026, 10, 31, 23, tzinfo=tz), [point[0] for point in reading.points])
 
         previous = None
-        for start, value in reading.points:
+        for start, state, sum_value in reading.points:
             self.assertEqual(start.minute, 0)
             self.assertEqual(start.second, 0)
             self.assertEqual(start.microsecond, 0)
             self.assertIsNotNone(start.tzinfo)
+            self.assertAlmostEqual(sum_value, state - reading.total, places=6)
             if previous is not None:
                 self.assertGreater(start, previous[0])
-                self.assertGreaterEqual(value, previous[1])
-            previous = (start, value)
+                self.assertGreaterEqual(state, previous[1])
+                self.assertGreaterEqual(sum_value, previous[2])
+            previous = (start, state, sum_value)
 
     def test_cp1250_header(self) -> None:
         raw = "Datum; Spotřeba tepla [GJ]\n10/2026;1,5\n".encode("cp1250")
@@ -129,6 +135,20 @@ class PortalTests(unittest.TestCase):
             tz,
         )
         self.assertAlmostEqual(reading.total, 15.453, places=3)
+        self.assertEqual(reading.sum_baseline_native, "15.453")
+        self.assertAlmostEqual(reading.points[-1][2], 0.0, places=6)
+
+        grown = portal.build_reading(
+            "heat",
+            "GJ",
+            {**lowered, "2026-10": "0.800"},
+            datetime(2026, 10, 30, 10, 0, tzinfo=tz),
+            tz,
+            sum_baseline_native="15.453",
+        )
+        self.assertEqual(grown.sum_baseline_native, "15.453")
+        self.assertAlmostEqual(grown.total, 15.493, places=3)
+        self.assertAlmostEqual(grown.points[-1][2], 0.040, places=3)
 
     def test_water_units(self) -> None:
         cold = portal.parse_consumption_csv(

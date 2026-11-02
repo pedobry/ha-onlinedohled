@@ -6,6 +6,7 @@ import asyncio
 import logging
 from functools import partial
 
+from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.models.statistics import (
     StatisticData,
     StatisticMeanType,
@@ -109,6 +110,11 @@ class OnlineDohledSensor(OnlineDohledEntity, SensorEntity):
             "portal_unit": reading.portal_unit,
         }
 
+    async def async_added_to_hass(self) -> None:
+        """Import history once the entity id exists."""
+        await super().async_added_to_hass()
+        await self._async_import_and_write()
+
     def _handle_coordinator_update(self) -> None:
         """Convert stored history, then write the new state."""
         self.hass.async_create_task(self._async_import_and_write())
@@ -138,13 +144,32 @@ class OnlineDohledSensor(OnlineDohledEntity, SensorEntity):
             "unit_of_measurement": reading.display_unit,
         }
         statistics: list[StatisticData] = [
-            {"start": start, "state": value, "sum": value} for start, value in reading.points
+            {"start": start, "state": state, "sum": sum_value}
+            for start, state, sum_value in reading.points
         ]
         try:
+            await self._async_clear_broken_statistics()
             await self._async_convert_existing_unit(reading.display_unit, reading.unit_class)
             async_import_statistics(self.hass, metadata, statistics)
         except Exception:
             _LOGGER.exception("Historie %s se nepodařila zapsat", self.entity_id)
+
+    async def _async_clear_broken_statistics(self) -> None:
+        """Drop absolute-sum history once after the sum-rebase upgrade."""
+        if not self.coordinator.reset_statistics:
+            return
+        done = asyncio.Event()
+
+        def _done() -> None:
+            self.hass.loop.call_soon_threadsafe(done.set)
+
+        get_instance(self.hass).async_clear_statistics([self.entity_id], on_done=_done)
+        try:
+            async with asyncio.timeout(10):
+                await done.wait()
+        except TimeoutError:
+            _LOGGER.warning("Mazání starých statistik %s vypršelo", self.entity_id)
+        _LOGGER.info("Smazány staré statistiky %s před novým importem", self.entity_id)
 
     async def _async_convert_existing_unit(self, new_unit: str, unit_class: str) -> None:
         """Rewrite an earlier kWh history into GJ before new points are stored."""
