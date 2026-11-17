@@ -35,7 +35,7 @@ U každého senzoru je atribut `portal_value` s číslem z posledního řádku C
 
 CSV obsahuje jen posledních 12 měsíců. Starší měsíce si integrace pamatuje a nikdy je nesníží. Číslo senzoru proto roste od prvního staženého měsíce, není to stav vodoměru od nuly.
 
-Tlačítko **Obnovit spotřeby** stáhne data hned, jinak se stahují jednou za 24 hodin.
+Tlačítko **Obnovit spotřeby** stáhne data hned. Jinak se stahují jednou denně v 6:00 a po startu Home Assistantu. Čas jde změnit v Nastavení → Zařízení a služby → Online Dohled → Konfigurovat.
 
 ## Grafy
 

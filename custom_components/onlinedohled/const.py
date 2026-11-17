@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
-
 DOMAIN = "onlinedohled"
 
 CONF_URL = "url"
 
-UPDATE_INTERVAL = timedelta(hours=24)
+CONF_UPDATE_TIME = "update_time"
+DEFAULT_UPDATE_TIME = "06:00:00"
 
 SERIES_HEAT = "heat"
 SERIES_COLD_WATER = "cold_water"

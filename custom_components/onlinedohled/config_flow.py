@@ -6,16 +6,18 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlowWithReload
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
+    TimeSelector,
 )
 
 from .api import AuthFailed, PortalConnectionError, async_fetch_series
-from .const import CONF_URL, DOMAIN
+from .const import CONF_UPDATE_TIME, CONF_URL, DEFAULT_UPDATE_TIME, DOMAIN
 from .portal import PortalError, device_name_from_url, normalize_page_url
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,6 +44,12 @@ class OnlineDohledConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config entry for one Online Dohled account."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OnlineDohledOptionsFlow:
+        """Return the options flow."""
+        return OnlineDohledOptionsFlow()
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Ask for credentials and the consumption page URL."""
@@ -109,3 +117,17 @@ class OnlineDohledConfigFlow(ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Neočekávaná chyba Online Dohledu")
             return {"base": "unknown"}
         return {}
+
+
+class OnlineDohledOptionsFlow(OptionsFlowWithReload):
+    """Let the user pick the time of the daily download."""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None):
+        """Ask for the download time."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+        current = self.config_entry.options.get(CONF_UPDATE_TIME, DEFAULT_UPDATE_TIME)
+        schema = vol.Schema(
+            {vol.Required(CONF_UPDATE_TIME, default=current): TimeSelector()}
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)

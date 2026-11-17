@@ -32,5 +32,16 @@
       "already_configured": "This account and page are already set up.",
       "reauth_successful": "The password has been updated."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Online Dohled options",
+        "description": "Data is downloaded once a day at this time (Home Assistant local time).",
+        "data": {
+          "update_time": "Download time"
+        }
+      }
+    }
   }
 }

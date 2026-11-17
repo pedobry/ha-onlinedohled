@@ -32,5 +32,16 @@
       "already_configured": "Tento účet a stránka už jsou přidané.",
       "reauth_successful": "Heslo je aktualizované."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Nastavení Online Dohledu",
+        "description": "Data se stahují jednou denně v zadaný čas (místní čas Home Assistantu).",
+        "data": {
+          "update_time": "Čas stahování"
+        }
+      }
+    }
   }
 }

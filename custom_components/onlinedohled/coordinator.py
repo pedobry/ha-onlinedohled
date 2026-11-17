@@ -13,21 +13,22 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import dt as dt_util
 
 from .api import AuthFailed, PortalConnectionError, async_fetch_series
-from .const import CONF_URL, DOMAIN, UPDATE_INTERVAL
+from .const import CONF_URL, DOMAIN
 from .portal import PortalError, SeriesReading, build_readings, merge_months
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class OnlineDohledCoordinator(DataUpdateCoordinator[dict[str, SeriesReading]]):
-    """Fetch three CSV exports once per day and keep scrolled-off months."""
+    """Fetch three CSV exports once per day at a configured time and keep scrolled-off months."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=UPDATE_INTERVAL,
+            # Downloads are triggered at the configured time of day, see __init__.py.
+            update_interval=None,
             config_entry=entry,
         )
         self.entry_id = entry.entry_id
